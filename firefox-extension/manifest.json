@@ -3,6 +3,12 @@
   "name": "Claude Monitor",
   "version": "1.0",
   "description": "Reads Claude.ai usage stats and sends them to the GNOME top bar indicator.",
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "{40d3ec5d-53cc-42ad-bc0f-29799fcb4aee}",
+      "strict_min_version": "91.0"
+    }
+  },
   "permissions": [
     "nativeMessaging",
     "tabs",
