@@ -63,7 +63,7 @@ Firefox extensions that use native messaging must be loaded as a temporary add-o
 2. Click **This Firefox** → **Load Temporary Add-on**
 3. Select `firefox-extension/manifest.json`
 
-> **Note:** Temporary add-ons are removed when Firefox restarts. For a permanent install, see [Firefox extension signing](https://extensionworkshop.com/documentation/publish/).
+> **Note:** Temporary add-ons are removed when Firefox restarts — you will need to reload the extension each time Firefox starts. To do so, go to `about:debugging` → Load Temporary Add-on → select `firefox-extension/manifest.json`. For a permanent install without this limitation, the extension needs to be signed by Mozilla — see [Firefox extension signing](https://extensionworkshop.com/documentation/publish/).
 
 ### Test it
 
