@@ -41,7 +41,7 @@ claude-monitor/
 ## Installation
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/claude-monitor
+git clone https://github.com/vmalep/claude-monitor
 cd claude-monitor
 chmod +x install.sh
 ./install.sh
