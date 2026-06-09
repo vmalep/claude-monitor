@@ -1,7 +1,7 @@
 {
   "manifest_version": 2,
   "name": "Claude Monitor",
-  "version": "1.0",
+  "version": "1.1",
   "description": "Reads Claude.ai usage stats and sends them to the GNOME top bar indicator.",
   "browser_specific_settings": {
     "gecko": {
