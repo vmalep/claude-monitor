@@ -127,3 +127,7 @@ cat ~/.claude_cost
 ## License
 
 MIT
+
+## Download
+
+A pre-signed Firefox extension is available on the [Releases page](https://github.com/vmalep/claude-monitor/releases). Download `claude-monitor-1.2.xpi` and install it via `about:addons` → gear icon ⚙️ → **Install Add-on From File**.
