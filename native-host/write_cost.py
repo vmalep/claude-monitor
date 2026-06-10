@@ -45,7 +45,7 @@ def main():
         "weekly_pct":    existing.get("weekly_pct"),
         "weekly_reset":  existing.get("weekly_reset"),
         # Accumulate Claude Code fields
-        "code_cost":     round(existing.get("code_cost", 0.0) + cost_usd, 6),
+        "code_cost":     round((existing.get("code_cost") or 0.0) + cost_usd, 6),
         "input_tokens":  existing.get("input_tokens", 0) + input_tok,
         "output_tokens": existing.get("output_tokens", 0) + output_tok,
         "last_updated":  now,
