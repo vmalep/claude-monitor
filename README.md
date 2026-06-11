@@ -10,8 +10,8 @@ Clicking the indicator opens a dropdown with:
 
 | Field | Source |
 |---|---|
-| Session % used + reset time | claude.ai (via poller daemon or Firefox extension) |
-| Weekly % used + reset time | claude.ai (via poller daemon or Firefox extension) |
+| Session % used + reset time | claude.ai (via poller daemon) |
+| Weekly % used + reset time | claude.ai (via poller daemon) |
 | Claude Code session cost ($) | Claude Code hook |
 | Input / output tokens | Claude Code hook |
 | Last updated time | automatic |
@@ -23,10 +23,8 @@ The top bar label shows the **session % in colour** (blue → yellow → red as 
 ```
 claude-monitor/
 ├── gnome-extension/        GNOME Shell extension (top bar indicator)
-├── firefox-extension/      Firefox extension (reads claude.ai usage from DOM)
 ├── native-host/
-│   ├── claude_monitor_host.py   Firefox → filesystem bridge
-│   ├── claude_poller.py         Standalone poller daemon (no Firefox needed)
+│   ├── claude_poller.py         Poller daemon (reads claude.ai usage every 60 s)
 │   ├── claude-monitor.service   systemd user service for the poller
 │   └── write_cost.py            Claude Code Stop hook
 ├── install.sh
@@ -67,19 +65,9 @@ systemctl --user status claude-monitor
 journalctl --user -u claude-monitor -f   # live logs
 ```
 
-### Load the Firefox extension (optional)
-
-The Firefox extension provides faster, DOM-based updates while the browser is open. Load it as a temporary add-on:
-
-1. Open Firefox → `about:debugging`
-2. Click **This Firefox** → **Load Temporary Add-on**
-3. Select `firefox-extension/manifest.json`
-
-> **Note:** Temporary add-ons are removed when Firefox restarts. For a permanent install, the extension needs to be signed by Mozilla — see [Firefox extension signing](https://extensionworkshop.com/documentation/publish/).
-
 ### Test it
 
-The GNOME top bar updates within 60 seconds of installation (from the poller daemon). If the Firefox extension is also loaded, updates happen immediately when you open the usage popup on claude.ai.
+The GNOME top bar updates within 60 seconds of installation.
 
 To test Claude Code tracking manually:
 
@@ -127,13 +115,6 @@ systemctl --user restart claude-monitor
 **GNOME extension in ERROR state**
 ```bash
 journalctl /usr/bin/gnome-shell --since "5 minutes ago" | grep -A5 claude-cost
-```
-
-**Native messaging not working**
-```bash
-cat ~/.mozilla/native-messaging-hosts/claude_monitor_host.json
-# Check that "path" points to a real file
-python3 ~/.local/share/claude-monitor/claude_monitor_host.py  # should hang waiting for stdin
 ```
 
 **Claude Code hook not firing**

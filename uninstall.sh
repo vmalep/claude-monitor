@@ -7,9 +7,11 @@ echo "▶ Disabling GNOME extension..."
 gnome-extensions disable "$EXT_ID" 2>/dev/null || true
 rm -rf "$HOME/.local/share/gnome-shell/extensions/$EXT_ID"
 
-echo "▶ Removing native messaging host..."
-rm -f "$HOME/.mozilla/native-messaging-hosts/claude_monitor_host.json"
-rm -f "$HOME/.local/share/claude-monitor/claude_monitor_host.py"
+echo "▶ Stopping and removing poller service..."
+systemctl --user disable --now claude-monitor.service 2>/dev/null || true
+rm -f "$HOME/.config/systemd/user/claude-monitor.service"
+rm -f "$HOME/.local/share/claude-monitor/claude_poller.py"
+systemctl --user daemon-reload
 
 echo "▶ Removing Claude Code hook..."
 rm -f "$HOME/.claude/hooks/write_cost.py"

@@ -4,7 +4,6 @@ set -e
 REPO_DIR="$(cd "$(dirname "$0")" && pwd)"
 EXT_ID="claude-cost@local"
 GNOME_EXT_DIR="$HOME/.local/share/gnome-shell/extensions/$EXT_ID"
-NATIVE_HOST_DIR="$HOME/.mozilla/native-messaging-hosts"
 HOOK_DIR="$HOME/.claude/hooks"
 SETTINGS_FILE="$HOME/.claude/settings.json"
 
@@ -20,31 +19,7 @@ cp "$REPO_DIR/gnome-extension/$EXT_ID/metadata.json" "$GNOME_EXT_DIR/"
 cp "$REPO_DIR/gnome-extension/$EXT_ID/extension.js"  "$GNOME_EXT_DIR/"
 echo "  → $GNOME_EXT_DIR"
 
-# ── 2. Native messaging host ────────────────────────────────────────────────
-echo "▶ Installing native messaging host..."
-mkdir -p "$NATIVE_HOST_DIR"
-HOST_SCRIPT="$HOME/.local/share/claude-monitor/claude_monitor_host.py"
-mkdir -p "$(dirname "$HOST_SCRIPT")"
-cp "$REPO_DIR/native-host/claude_monitor_host.py" "$HOST_SCRIPT"
-chmod +x "$HOST_SCRIPT"
-
-# Write manifest with correct path
-python3 - <<PYEOF
-import json, os
-manifest = {
-    "name": "claude_monitor_host",
-    "description": "Claude Monitor native host",
-    "path": "$HOST_SCRIPT",
-    "type": "stdio",
-    "allowed_extensions": ["claude-monitor@local"]
-}
-out = os.path.expanduser("~/.mozilla/native-messaging-hosts/claude_monitor_host.json")
-with open(out, "w") as f:
-    json.dump(manifest, f, indent=2)
-print(f"  → {out}")
-PYEOF
-
-# ── 3. Claude Code hook ──────────────────────────────────────────────────────
+# ── 2. Claude Code hook ──────────────────────────────────────────────────────
 echo "▶ Installing Claude Code hook..."
 mkdir -p "$HOOK_DIR"
 cp "$REPO_DIR/native-host/write_cost.py" "$HOOK_DIR/write_cost.py"
@@ -104,8 +79,8 @@ echo "✅ Installation complete!"
 echo ""
 echo "Next steps:"
 echo "  1. The poller daemon is now running — GNOME top bar updates every 60 s"
-echo "     without Firefox. Check status: systemctl --user status claude-monitor"
-echo "  2. (Optional) Load the Firefox extension for instant updates on claude.ai:"
-echo "     about:debugging → Load Temporary Add-on → select firefox-extension/manifest.json"
+echo "     Check status: systemctl --user status claude-monitor"
+echo "  2. Make sure you are logged in to claude.ai in Firefox at least once"
+echo "     (the poller reads session cookies from Firefox's on-disk database)"
 echo ""
 echo "To uninstall: run uninstall.sh"
