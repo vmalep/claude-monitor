@@ -1,7 +1,0 @@
-{
-  "name": "claude_monitor_host",
-  "description": "Claude Monitor native host — writes usage data to ~/.claude_cost",
-  "path": "PLACEHOLDER_PATH",
-  "type": "stdio",
-  "allowed_extensions": ["claude-monitor@local"]
-}
