@@ -14,6 +14,7 @@ import logging
 import os
 import shutil
 import sqlite3
+import subprocess
 import tempfile
 import time
 import urllib.error as urlerror
@@ -126,6 +127,18 @@ def fmt_reset(iso_str):
     return d.astimezone().strftime("%a %-I:%M %p")
 
 
+def notify(summary, body):
+    """Send a desktop notification, best-effort."""
+    try:
+        subprocess.run(
+            ["notify-send", "--icon=dialog-warning", "--app-name=Claude Monitor",
+             summary, body],
+            timeout=5,
+        )
+    except Exception:
+        pass
+
+
 def fetch_and_write():
     cookies = load_cookies()
 
@@ -165,13 +178,27 @@ def fetch_and_write():
 
 def main():
     log.info("starting (polling every %ds)", POLL_SECONDS)
+    auth_ok = True  # assume OK at start to avoid spurious notification on first failure
     while True:
         try:
             fetch_and_write()
+            if not auth_ok:
+                log.info("authentication restored")
+                notify("Claude Monitor restored",
+                       "Usage data is updating again.")
+            auth_ok = True
         except RuntimeError as e:
             log.error("%s", e)
+            if auth_ok:
+                notify("Claude Monitor: action needed",
+                       "Log in to claude.ai in Firefox to restore usage tracking.")
+            auth_ok = False
         except urlerror.HTTPError as e:
             log.warning("HTTP %s from claude.ai", e.code)
+            if e.code in (401, 403) and auth_ok:
+                notify("Claude Monitor: action needed",
+                       "Session expired — open claude.ai in Firefox to restore usage tracking.")
+                auth_ok = False
         except Exception as e:
             log.warning("poll failed: %s", e)
         time.sleep(POLL_SECONDS)
