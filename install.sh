@@ -78,7 +78,24 @@ with open(path, "w") as f:
 print("  → ~/.claude/settings.json updated")
 PYEOF
 
-# ── 4. Enable GNOME extension ────────────────────────────────────────────────
+# ── 4. Claude poller (systemd user service) ──────────────────────────────────
+echo "▶ Installing Claude poller daemon..."
+POLLER_SCRIPT="$HOME/.local/share/claude-monitor/claude_poller.py"
+cp "$REPO_DIR/native-host/claude_poller.py" "$POLLER_SCRIPT"
+chmod +x "$POLLER_SCRIPT"
+echo "  → $POLLER_SCRIPT"
+
+SYSTEMD_USER_DIR="$HOME/.config/systemd/user"
+mkdir -p "$SYSTEMD_USER_DIR"
+cp "$REPO_DIR/native-host/claude-monitor.service" "$SYSTEMD_USER_DIR/claude-monitor.service"
+echo "  → $SYSTEMD_USER_DIR/claude-monitor.service"
+
+systemctl --user daemon-reload
+systemctl --user enable --now claude-monitor.service \
+    && echo "  → service enabled and started" \
+    || echo "  → could not start service; run: systemctl --user enable --now claude-monitor.service"
+
+# ── 5. Enable GNOME extension ────────────────────────────────────────────────
 echo "▶ Enabling GNOME extension..."
 gnome-extensions enable "$EXT_ID" 2>/dev/null && echo "  → Enabled" || echo "  → Log out and back in, then run: gnome-extensions enable $EXT_ID"
 
@@ -86,9 +103,9 @@ echo ""
 echo "✅ Installation complete!"
 echo ""
 echo "Next steps:"
-echo "  1. Load the Firefox extension: about:debugging → Load Temporary Add-on"
-echo "     → select firefox-extension/manifest.json"
-echo "  2. Go to claude.ai and open the usage popup (click your avatar)"
-echo "  3. The GNOME top bar should update within 5 seconds"
+echo "  1. The poller daemon is now running — GNOME top bar updates every 60 s"
+echo "     without Firefox. Check status: systemctl --user status claude-monitor"
+echo "  2. (Optional) Load the Firefox extension for instant updates on claude.ai:"
+echo "     about:debugging → Load Temporary Add-on → select firefox-extension/manifest.json"
 echo ""
 echo "To uninstall: run uninstall.sh"

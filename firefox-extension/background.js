@@ -1,5 +1,5 @@
 const HOST = "claude_monitor_host";
-const POLL_INTERVAL_MS = 5 * 60 * 1000;
+const POLL_INTERVAL_MS = 60 * 1000;
 
 async function getOrgId() {
     const resp = await fetch("https://claude.ai/api/organizations", { credentials: "include" });

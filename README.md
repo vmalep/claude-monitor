@@ -10,8 +10,8 @@ Clicking the indicator opens a dropdown with:
 
 | Field | Source |
 |---|---|
-| Session % used + reset time | claude.ai (via Firefox extension) |
-| Weekly % used + reset time | claude.ai (via Firefox extension) |
+| Session % used + reset time | claude.ai (via poller daemon or Firefox extension) |
+| Weekly % used + reset time | claude.ai (via poller daemon or Firefox extension) |
 | Claude Code session cost ($) | Claude Code hook |
 | Input / output tokens | Claude Code hook |
 | Last updated time | automatic |
@@ -26,6 +26,8 @@ claude-monitor/
 ├── firefox-extension/      Firefox extension (reads claude.ai usage from DOM)
 ├── native-host/
 │   ├── claude_monitor_host.py   Firefox → filesystem bridge
+│   ├── claude_poller.py         Standalone poller daemon (no Firefox needed)
+│   ├── claude-monitor.service   systemd user service for the poller
 │   └── write_cost.py            Claude Code Stop hook
 ├── install.sh
 └── uninstall.sh
@@ -34,9 +36,8 @@ claude-monitor/
 ## Requirements
 
 - Ubuntu with GNOME Shell 45–50
-- Firefox
 - Python 3
-- Claude Code (optional — only needed for cost tracking)
+- Firefox with an active claude.ai session (cookies are read from disk — Firefox need not be open)
 
 ## Installation
 
@@ -55,19 +56,30 @@ After logging back in:
 gnome-extensions enable claude-cost@local
 ```
 
-### Load the Firefox extension
+### Poller daemon
 
-Firefox extensions that use native messaging must be loaded as a temporary add-on or signed. To load temporarily (sufficient for personal use):
+`install.sh` installs `claude_poller.py` as a systemd user service that starts on login and polls `claude.ai` every 60 seconds. It authenticates using the `sessionKey` and `cf_clearance` cookies stored in your Firefox profile on disk — **Firefox does not need to be running**, just previously logged in to claude.ai.
+
+Check its status at any time:
+
+```bash
+systemctl --user status claude-monitor
+journalctl --user -u claude-monitor -f   # live logs
+```
+
+### Load the Firefox extension (optional)
+
+The Firefox extension provides faster, DOM-based updates while the browser is open. Load it as a temporary add-on:
 
 1. Open Firefox → `about:debugging`
 2. Click **This Firefox** → **Load Temporary Add-on**
 3. Select `firefox-extension/manifest.json`
 
-> **Note:** Temporary add-ons are removed when Firefox restarts — you will need to reload the extension each time Firefox starts. To do so, go to `about:debugging` → Load Temporary Add-on → select `firefox-extension/manifest.json`. For a permanent install without this limitation, the extension needs to be signed by Mozilla — see [Firefox extension signing](https://extensionworkshop.com/documentation/publish/).
+> **Note:** Temporary add-ons are removed when Firefox restarts. For a permanent install, the extension needs to be signed by Mozilla — see [Firefox extension signing](https://extensionworkshop.com/documentation/publish/).
 
 ### Test it
 
-Go to **claude.ai**, click your avatar or the usage indicator to open the **Plan usage limits** popup. Within 5 seconds the GNOME top bar should update.
+The GNOME top bar updates within 60 seconds of installation (from the poller daemon). If the Firefox extension is also loaded, updates happen immediately when you open the usage popup on claude.ai.
 
 To test Claude Code tracking manually:
 
@@ -97,7 +109,20 @@ All data is stored in `~/.claude_cost` as JSON:
 ## Troubleshooting
 
 **Indicator shows "Claude: no data"**
-→ `~/.claude_cost` doesn't exist yet. Open the usage popup on claude.ai.
+→ `~/.claude_cost` doesn't exist yet. Check the poller is running:
+```bash
+systemctl --user status claude-monitor
+journalctl --user -u claude-monitor --since "5 minutes ago"
+```
+
+**Poller fails with "Required cookies not found"**
+→ Log in to claude.ai in Firefox at least once; the cookies are then stored on disk and the poller can read them without the browser being open.
+
+**Poller fails with HTTP 403**
+→ The `cf_clearance` Cloudflare cookie may have expired. Open claude.ai in Firefox (Cloudflare will silently refresh the cookie), then restart the service:
+```bash
+systemctl --user restart claude-monitor
+```
 
 **GNOME extension in ERROR state**
 ```bash
