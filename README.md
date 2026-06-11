@@ -2,7 +2,7 @@
 
 A GNOME top bar indicator that shows your **Claude.ai usage** (session %, weekly %) and **Claude Code session cost** in real time on Ubuntu/GNOME.
 
-![Screenshot showing Claude: 16% in the GNOME top bar](screenshot.png)
+![Screenshot showing Claude: 34% in the GNOME top bar](screenshot.png)
 
 ## What it shows
 
