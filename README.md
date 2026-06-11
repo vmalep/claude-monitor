@@ -27,6 +27,8 @@ claude-monitor/
 │   ├── claude_poller.py         Poller daemon (reads claude.ai usage every 60 s)
 │   ├── claude-monitor.service   systemd user service for the poller
 │   └── write_cost.py            Claude Code Stop hook
+├── packaging/
+│   └── build-deb.sh             Builds the .deb package
 ├── install.sh
 └── uninstall.sh
 ```
@@ -38,6 +40,24 @@ claude-monitor/
 - A claude.ai account (Pro or Max plan)
 
 ## Installation
+
+### Option 1 — .deb package (recommended)
+
+Download the latest `.deb` from the [Releases page](https://github.com/vmalep/claude-monitor/releases) and install it:
+
+```bash
+sudo dpkg -i claude-monitor_1.3_all.deb
+```
+
+Then run the one-time per-user setup:
+
+```bash
+claude-monitor-setup
+```
+
+Log out and back in if prompted to reload the GNOME extension.
+
+### Option 2 — from source
 
 ```bash
 git clone https://github.com/vmalep/claude-monitor
@@ -56,7 +76,7 @@ gnome-extensions enable claude-cost@local
 
 ### Poller daemon
 
-`install.sh` installs `claude_poller.py` as a systemd user service that starts on login and polls `claude.ai` every 60 seconds. It authenticates by reading session cookies from your Firefox profile on disk — no browser needs to be open.
+Both installation methods set up `claude_poller.py` as a systemd user service that starts on login and polls `claude.ai` every 60 seconds. It authenticates by reading session cookies from your Firefox profile on disk — no browser needs to be open.
 
 Check its status at any time:
 
@@ -126,6 +146,13 @@ cat ~/.claude_cost
 
 ## Uninstall
 
+**.deb install:**
+```bash
+claude-monitor-teardown
+sudo dpkg -r claude-monitor
+```
+
+**Source install:**
 ```bash
 ./uninstall.sh
 ```
@@ -133,4 +160,3 @@ cat ~/.claude_cost
 ## License
 
 MIT
-
