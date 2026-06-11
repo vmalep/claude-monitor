@@ -35,7 +35,7 @@ claude-monitor/
 
 - Ubuntu with GNOME Shell 45–50
 - Python 3
-- Firefox with an active claude.ai session (cookies are read from disk — Firefox need not be open)
+- A claude.ai account (Pro or Max plan)
 
 ## Installation
 
@@ -56,7 +56,7 @@ gnome-extensions enable claude-cost@local
 
 ### Poller daemon
 
-`install.sh` installs `claude_poller.py` as a systemd user service that starts on login and polls `claude.ai` every 60 seconds. It authenticates using the `sessionKey` and `cf_clearance` cookies stored in your Firefox profile on disk — **Firefox does not need to be running**, just previously logged in to claude.ai.
+`install.sh` installs `claude_poller.py` as a systemd user service that starts on login and polls `claude.ai` every 60 seconds. It authenticates by reading session cookies from your Firefox profile on disk — no browser needs to be open.
 
 Check its status at any time:
 
