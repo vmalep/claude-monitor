@@ -4,5 +4,5 @@
   "description": "Shows Claude.ai usage and Claude Code cost in the GNOME top bar",
   "version": 2,
   "shell-version": ["45", "46", "47", "48", "49", "50"],
-  "url": "https://github.com/YOUR_USERNAME/claude-monitor"
+  "url": "https://github.com/vmalep/claude-monitor"
 }
