@@ -16,7 +16,7 @@ Clicking the indicator opens a dropdown with:
 | Input / output tokens | Claude Code hook |
 | Last updated time | automatic |
 
-The top bar label shows the **session % in colour** (blue → yellow → red as you approach the limit), or the Claude Code cost if no web data is available.
+The top bar label shows the **session % in colour** (blue → yellow → red as you approach the limit), or the Claude Code cost if no web data is available. When the session reaches 100% and Claude becomes unavailable, the label switches to **`Claude: FULL – reset in Xm`** and counts down live every 5 seconds until the session resets.
 
 ## Components
 
@@ -46,7 +46,7 @@ claude-monitor/
 Download the latest `.deb` from the [Releases page](https://github.com/vmalep/claude-monitor/releases) and install it:
 
 ```bash
-sudo dpkg -i claude-monitor_1.3_all.deb
+sudo dpkg -i claude-monitor_1.4_all.deb
 ```
 
 Then run the one-time per-user setup:
@@ -103,16 +103,19 @@ All data is stored in `~/.claude_cost` as JSON:
 
 ```json
 {
-  "session_pct":   16,
-  "session_reset": "in 50 min",
-  "weekly_pct":    21,
-  "weekly_reset":  "Sat 3:59 AM",
-  "code_cost":     0.0123,
-  "input_tokens":  5000,
-  "output_tokens": 1200,
-  "last_updated":  "2026-06-08T20:30:00+00:00"
+  "session_pct":      16,
+  "session_reset":    "in 50 min",
+  "session_reset_at": "2026-06-12T19:20:00Z",
+  "weekly_pct":       21,
+  "weekly_reset":     "Sat 3:59 AM",
+  "code_cost":        0.0123,
+  "input_tokens":     5000,
+  "output_tokens":    1200,
+  "last_updated":     "2026-06-12T18:30:00+00:00"
 }
 ```
+
+`session_reset_at` is the raw ISO timestamp used by the extension to compute the live countdown without waiting for the next poll.
 
 ## Troubleshooting
 
@@ -131,6 +134,9 @@ journalctl --user -u claude-monitor --since "5 minutes ago"
 ```bash
 systemctl --user restart claude-monitor
 ```
+
+**Getting "action needed / restored" desktop notifications repeatedly**
+→ The poller requires 3 consecutive failures (~3 minutes) before notifying, so transient errors (e.g. the brief 401 that occurs when your session hits 100%) are silently retried and won't trigger a notification.
 
 **GNOME extension in ERROR state**
 ```bash
