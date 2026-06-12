@@ -3,7 +3,7 @@
 set -e
 
 REPO="$(cd "$(dirname "$0")/.." && pwd)"
-VERSION="1.3"
+VERSION="1.4"
 PKG_NAME="claude-monitor_${VERSION}_all"
 BUILD_DIR="$(mktemp -d)"
 PKG="$BUILD_DIR/$PKG_NAME"
