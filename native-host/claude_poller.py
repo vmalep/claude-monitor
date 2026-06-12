@@ -25,6 +25,10 @@ COST_FILE    = os.path.expanduser("~/.claude_cost")
 POLL_SECONDS = 60
 API_BASE     = "https://claude.ai/api"
 
+# Require this many consecutive failures before sending a notification,
+# to avoid spurious "disconnected / restored" pairs from transient errors.
+NOTIFY_FAIL_THRESHOLD = 3
+
 # Cookie names required from the Firefox profile
 REQUIRED_COOKIES = {"sessionKey", "cf_clearance"}
 USEFUL_COOKIES   = REQUIRED_COOKIES | {"__ssid", "activitySessionId"}
@@ -148,10 +152,11 @@ def fetch_and_write():
     data = api_get(f"/organizations/{org_id}/usage", cookies)
 
     payload = {
-        "session_pct":   data.get("five_hour", {}).get("utilization"),
-        "session_reset": fmt_reset(data.get("five_hour", {}).get("resets_at")),
-        "weekly_pct":    data.get("seven_day", {}).get("utilization"),
-        "weekly_reset":  fmt_reset(data.get("seven_day", {}).get("resets_at")),
+        "session_pct":      data.get("five_hour", {}).get("utilization"),
+        "session_reset":    fmt_reset(data.get("five_hour", {}).get("resets_at")),
+        "session_reset_at": data.get("five_hour", {}).get("resets_at"),
+        "weekly_pct":       data.get("seven_day", {}).get("utilization"),
+        "weekly_reset":     fmt_reset(data.get("seven_day", {}).get("resets_at")),
     }
 
     existing = {}
@@ -178,29 +183,33 @@ def fetch_and_write():
 
 def main():
     log.info("starting (polling every %ds)", POLL_SECONDS)
-    auth_ok = True  # assume OK at start to avoid spurious notification on first failure
+    auth_ok = True   # assume OK at start; avoids spurious notification on first failure
+    consec_fails = 0
     while True:
         try:
             fetch_and_write()
             if not auth_ok:
                 log.info("authentication restored")
-                notify("Claude Monitor restored",
-                       "Usage data is updating again.")
+                notify("Claude Monitor restored", "Usage data is updating again.")
             auth_ok = True
+            consec_fails = 0
         except RuntimeError as e:
             log.error("%s", e)
-            if auth_ok:
+            consec_fails += 1
+            if auth_ok and consec_fails >= NOTIFY_FAIL_THRESHOLD:
                 notify("Claude Monitor: action needed",
                        "Log in to claude.ai in Firefox to restore usage tracking.")
-            auth_ok = False
+                auth_ok = False
         except urlerror.HTTPError as e:
             log.warning("HTTP %s from claude.ai", e.code)
-            if e.code in (401, 403) and auth_ok:
+            consec_fails += 1
+            if e.code in (401, 403) and auth_ok and consec_fails >= NOTIFY_FAIL_THRESHOLD:
                 notify("Claude Monitor: action needed",
                        "Session expired — open claude.ai in Firefox to restore usage tracking.")
                 auth_ok = False
         except Exception as e:
             log.warning("poll failed: %s", e)
+            consec_fails += 1
         time.sleep(POLL_SECONDS)
 
 

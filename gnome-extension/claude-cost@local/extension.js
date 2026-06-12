@@ -111,6 +111,12 @@ class ClaudeCostIndicator extends PanelMenu.Button {
         );
     }
 
+    _minsUntil(isoStr) {
+        if (!isoStr) return null;
+        const ms = new Date(isoStr).getTime() - Date.now();
+        return Math.max(0, Math.ceil(ms / 60000));
+    }
+
     _refresh() {
         try {
             const file = Gio.File.new_for_path(COST_FILE);
@@ -121,9 +127,15 @@ class ClaudeCostIndicator extends PanelMenu.Button {
             let topLabel = 'Claude: ';
             if (d.session_pct != null) {
                 const pct = d.session_pct;
-                const color = pct >= 80 ? '#FF6B6B' : pct >= 50 ? '#FFD93D' : '#8BC4F9';
-                topLabel += `${pct}%`;
-                this._label.set_style(`margin-left: 4px; color: ${color};`);
+                if (pct >= 100 && d.session_reset_at) {
+                    const mins = this._minsUntil(d.session_reset_at);
+                    topLabel += `FULL – reset in ${mins}m`;
+                    this._label.set_style('margin-left: 4px; color: #FF6B6B;');
+                } else {
+                    const color = pct >= 80 ? '#FF6B6B' : pct >= 50 ? '#FFD93D' : '#8BC4F9';
+                    topLabel += `${pct}%`;
+                    this._label.set_style(`margin-left: 4px; color: ${color};`);
+                }
             } else if (d.code_cost != null) {
                 topLabel += `$${Number(d.code_cost).toFixed(4)}`;
                 this._label.set_style('margin-left: 4px; color: #8BC4F9;');
@@ -134,10 +146,14 @@ class ClaudeCostIndicator extends PanelMenu.Button {
             this._label.set_text(topLabel);
 
             // claude.ai rows
+            const sessionFull = d.session_pct != null && d.session_pct >= 100;
+            const sessionResetLabel = sessionFull && d.session_reset_at
+                ? `in ${this._minsUntil(d.session_reset_at)}m (FULL)`
+                : d.session_reset || '–';
             this._updateRow(this._sessionPctItem, '  Session',
                 d.session_pct != null ? `${d.session_pct}% used` : '–');
             this._updateRow(this._sessionRstItem, '  Resets',
-                d.session_reset || '–');
+                sessionResetLabel);
             this._updateRow(this._weeklyPctItem,  '  Weekly',
                 d.weekly_pct != null ? `${d.weekly_pct}% used` : '–');
             this._updateRow(this._weeklyRstItem,  '  Resets',
