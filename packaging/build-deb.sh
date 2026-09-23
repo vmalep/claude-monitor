@@ -3,7 +3,7 @@
 set -e
 
 REPO="$(cd "$(dirname "$0")/.." && pwd)"
-VERSION="1.4"
+VERSION="1.5"
 PKG_NAME="claude-monitor_${VERSION}_all"
 BUILD_DIR="$(mktemp -d)"
 PKG="$BUILD_DIR/$PKG_NAME"
@@ -25,6 +25,8 @@ chmod 755 "$PKG/usr/share/claude-monitor/claude_poller.py"
 cp "$REPO/gnome-extension/claude-cost@local/extension.js" \
    "$PKG/usr/share/gnome-shell/extensions/claude-cost@local/"
 cp "$REPO/gnome-extension/claude-cost@local/metadata.json" \
+   "$PKG/usr/share/gnome-shell/extensions/claude-cost@local/"
+cp "$REPO/gnome-extension/claude-cost@local/claude-icon.svg" \
    "$PKG/usr/share/gnome-shell/extensions/claude-cost@local/"
 
 # ── DEBIAN/control ────────────────────────────────────────────────────────────

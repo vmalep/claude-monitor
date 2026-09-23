@@ -46,7 +46,7 @@ claude-monitor/
 Download the latest `.deb` from the [Releases page](https://github.com/vmalep/claude-monitor/releases) and install it:
 
 ```bash
-sudo dpkg -i claude-monitor_1.4_all.deb
+sudo dpkg -i claude-monitor_1.5_all.deb
 ```
 
 Then run the one-time per-user setup:
