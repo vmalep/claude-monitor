@@ -27,8 +27,9 @@ const REFRESH_INTERVAL = 5;
 
 const ClaudeCostIndicator = GObject.registerClass(
 class ClaudeCostIndicator extends PanelMenu.Button {
-    _init() {
+    _init(extensionPath) {
         super._init(0.0, 'Claude Usage Monitor');
+        this._iconPath = GLib.build_filenamev([extensionPath, 'claude-icon.svg']);
         this._buildUI();
         this._startPolling();
     }
@@ -37,9 +38,9 @@ class ClaudeCostIndicator extends PanelMenu.Button {
         const box = new St.BoxLayout({ style_class: 'panel-status-menu-box' });
 
         this._icon = new St.Icon({
-            icon_name: 'dialog-information-symbolic',
+            gicon: new Gio.FileIcon({ file: Gio.File.new_for_path(this._iconPath) }),
             style_class: 'system-status-icon',
-            icon_size: 14,
+            icon_size: 16,
         });
 
         this._label = new St.Label({
@@ -59,6 +60,12 @@ class ClaudeCostIndicator extends PanelMenu.Button {
         const titleItem = new PopupMenu.PopupMenuItem('Claude Usage Monitor', { reactive: false });
         titleItem.label.set_style('font-weight: bold; font-size: 1.1em;');
         this.menu.addMenuItem(titleItem);
+
+        // Status / warning row — hidden unless the poller is failing
+        this._statusItem = new PopupMenu.PopupMenuItem('', { reactive: false });
+        this._statusItem.label.set_style('color: #FF6B6B; font-family: monospace;');
+        this._statusItem.visible = false;
+        this.menu.addMenuItem(this._statusItem);
 
         // claude.ai section
         this.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
@@ -122,6 +129,7 @@ class ClaudeCostIndicator extends PanelMenu.Button {
             const file = Gio.File.new_for_path(COST_FILE);
             const [, contents] = file.load_contents(null);
             const d = JSON.parse(new TextDecoder().decode(contents));
+            const hasError = d.poller_status === 'error';
 
             // Build top bar label — prefer web usage if available
             let topLabel = 'Claude: ';
@@ -143,7 +151,17 @@ class ClaudeCostIndicator extends PanelMenu.Button {
                 topLabel += '–';
                 this._label.set_style('margin-left: 4px; color: #888;');
             }
+            if (hasError) {
+                topLabel = topLabel.replace('Claude: ', 'Claude: ⚠ ');
+                this._label.set_style('margin-left: 4px; color: #FF6B6B;');
+            }
             this._label.set_text(topLabel);
+
+            // Status row — only shown when the poller can't reach claude.ai
+            this._statusItem.visible = hasError;
+            if (hasError) {
+                this._statusItem.label.set_text(`⚠️  ${d.poller_error || 'Log in to claude.ai in Firefox'}`);
+            }
 
             // claude.ai rows
             const sessionFull = d.session_pct != null && d.session_pct >= 100;
@@ -197,7 +215,7 @@ class ClaudeCostIndicator extends PanelMenu.Button {
 
 export default class ClaudeMonitorExtension extends Extension {
     enable() {
-        this._indicator = new ClaudeCostIndicator();
+        this._indicator = new ClaudeCostIndicator(this.path);
         Main.panel.addToStatusArea(this.uuid, this._indicator);
     }
     disable() {

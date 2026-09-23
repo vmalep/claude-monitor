@@ -15,8 +15,9 @@ echo ""
 # ── 1. GNOME extension ──────────────────────────────────────────────────────
 echo "▶ Installing GNOME Shell extension..."
 mkdir -p "$GNOME_EXT_DIR"
-cp "$REPO_DIR/gnome-extension/$EXT_ID/metadata.json" "$GNOME_EXT_DIR/"
-cp "$REPO_DIR/gnome-extension/$EXT_ID/extension.js"  "$GNOME_EXT_DIR/"
+cp "$REPO_DIR/gnome-extension/$EXT_ID/metadata.json"  "$GNOME_EXT_DIR/"
+cp "$REPO_DIR/gnome-extension/$EXT_ID/extension.js"    "$GNOME_EXT_DIR/"
+cp "$REPO_DIR/gnome-extension/$EXT_ID/claude-icon.svg" "$GNOME_EXT_DIR/"
 echo "  → $GNOME_EXT_DIR"
 
 # ── 2. Claude Code hook ──────────────────────────────────────────────────────

@@ -173,12 +173,34 @@ def fetch_and_write():
         "input_tokens":  existing.get("input_tokens"),
         "output_tokens": existing.get("output_tokens"),
         "last_updated":  datetime.now(timezone.utc).isoformat(timespec="seconds"),
+        "poller_status": "ok",
+        "poller_error":  None,
     }
 
     with open(COST_FILE, "w") as f:
         json.dump(out, f, indent=2)
 
     log.info("session=%s%% weekly=%s%%", payload["session_pct"], payload["weekly_pct"])
+
+
+def write_status(status, error=None):
+    """Patch poller_status/poller_error onto the cost file without
+    touching the last known usage numbers, so the panel can show a
+    warning instead of silently going stale."""
+    existing = {}
+    if os.path.exists(COST_FILE):
+        try:
+            with open(COST_FILE) as f:
+                existing = json.load(f)
+        except Exception:
+            existing = {}
+
+    existing["poller_status"] = status
+    existing["poller_error"] = error
+    existing["status_updated"] = datetime.now(timezone.utc).isoformat(timespec="seconds")
+
+    with open(COST_FILE, "w") as f:
+        json.dump(existing, f, indent=2)
 
 
 def main():
@@ -197,6 +219,7 @@ def main():
             log.error("%s", e)
             consec_fails += 1
             if auth_ok and consec_fails >= NOTIFY_FAIL_THRESHOLD:
+                write_status("error", "Log in to claude.ai in Firefox")
                 notify("Claude Monitor: action needed",
                        "Log in to claude.ai in Firefox to restore usage tracking.")
                 auth_ok = False
@@ -204,12 +227,16 @@ def main():
             log.warning("HTTP %s from claude.ai", e.code)
             consec_fails += 1
             if e.code in (401, 403) and auth_ok and consec_fails >= NOTIFY_FAIL_THRESHOLD:
+                write_status("error", "Session expired — log in to claude.ai in Firefox")
                 notify("Claude Monitor: action needed",
                        "Session expired — open claude.ai in Firefox to restore usage tracking.")
                 auth_ok = False
         except Exception as e:
             log.warning("poll failed: %s", e)
             consec_fails += 1
+            if auth_ok and consec_fails >= NOTIFY_FAIL_THRESHOLD:
+                write_status("error", f"Poll failed: {e}")
+                auth_ok = False
         time.sleep(POLL_SECONDS)
 
 
